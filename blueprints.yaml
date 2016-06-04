@@ -1,0 +1,14 @@
+name: Pygments
+version: 0.1.0
+testing: true
+description: Adds Pygments\' syntax highlighting
+icon: empire
+author:
+  name: Niols
+  email: niols@niols.fr
+  url: https://www.niols.fr
+homepage: https://github.com/Niols/grav-plugin-pygments
+keywords: pygments, syntax, highlighting
+bugs: https://github.com/Niols/grav-plugin-pygments
+readme: https://github.com/Niols/grav-plugin-pygments/blob/master/README.md
+license: MIT
