@@ -11,7 +11,7 @@ use Symfony\Component\Yaml\Exception\ParseException;
 
 class PygmentsPlugin extends Plugin
 {
-    private static $pattern = '#<pre><code>---(?<head>.*?)---(?<body>.*?)</code></pre>#s';
+    private static $pattern = '#<pre><code>---(?<head>.*?)\n---(?<body>.*?)</code></pre>#s';
     private static $pygmentize = 'plugins://pygments/pygmentize.py';
     
     public static function getSubscribedEvents()
