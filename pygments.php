@@ -22,6 +22,11 @@ class PygmentsPlugin extends Plugin
 
     public function onPageContentProcessed(Event $event)
     {
+	// Set a unicode locale for accented characters
+	$locale = 'en_US.UTF-8';
+	setlocale(LC_ALL, $locale);
+	putenv('LC_ALL='.$locale);
+
         $page = $event['page'];
         $content = $page->getRawContent();
 
@@ -66,7 +71,7 @@ class PygmentsPlugin extends Plugin
             /* Craft command line */
 
             // Send body via command line
-            $cmd = 'echo '.escapeshellarg($body);
+            $cmd = 'printf '.escapeshellarg(str_replace(['\\','%'], ['\\\\','%%'], $body));
 
             // Base command
             $cmd .= ' | '.$this->config->get('plugins.pygments.pygmentize.command', 'pygmentize');
