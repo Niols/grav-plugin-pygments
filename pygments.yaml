@@ -1,1 +1,11 @@
 enabled: true
+
+process_all: false
+guess_by_default: true
+
+pygmentize:
+    command: pygmentize
+    style: default
+
+    formatter:
+        noclasses: true
