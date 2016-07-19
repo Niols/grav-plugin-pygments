@@ -71,7 +71,7 @@ class PygmentsPlugin extends Plugin
             /* Craft command line */
 
             // Send body via command line
-            $cmd = 'printf '.escapeshellarg(str_replace(['\\','%'], ['\\\\','%%'], $body));
+            $cmd = 'printf -- '.escapeshellarg(str_replace(['\\','%'], ['\\\\','%%'], $body));
 
             // Base command
             $cmd .= ' | '.$this->config->get('plugins.pygments.pygmentize.command', 'pygmentize');
