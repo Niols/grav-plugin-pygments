@@ -22,10 +22,10 @@ class PygmentsPlugin extends Plugin
 
     public function onPageContentProcessed(Event $event)
     {
-	// Set a unicode locale for accented characters
-	$locale = 'en_US.UTF-8';
-	setlocale(LC_ALL, $locale);
-	putenv('LC_ALL='.$locale);
+        // Set a unicode locale for accented characters
+        $locale = 'en_US.UTF-8';
+        setlocale(LC_ALL, $locale);
+        putenv('LC_ALL='.$locale);
 
         $page = $event['page'];
         $content = $page->getRawContent();
@@ -68,53 +68,38 @@ class PygmentsPlugin extends Plugin
                 }
             }
 
-            /* Craft command line */
+            /* If we only want to colorize parts, we have to deal with that */
+            if (isset($head['only'])) {
+                $body = explode(PHP_EOL, $body);
 
-            // Send body via command line
-            $cmd = 'printf -- '.escapeshellarg(str_replace(['\\','%'], ['\\\\','%%'], $body));
+                foreach ($head['only'] as $part) {
+                    $i = strpos($part, '-');
+                    if ($i === false) {
+                        $begining = (int) $part;
+                        $end = $begining;
+                    } else {
+                        $begining = (int) substr($part, 0, $i);
+                        $end = (int) substr($part, $i+1);
+                    }
 
-            // Base command
-            $cmd .= ' | '.$this->config->get('plugins.pygments.pygmentize.command', 'pygmentize');
+                    $before = array_slice($body, 0, $begining-1);
+                    $between = array_slice($body, $begining-1, $end-$begining+1);
+                    $after = array_slice($body, $end);
 
-            // Find the language if given
-            if (isset($head['language'])) {
-                if ($head['language'] == 'guess') {
-                    $cmd .= ' -g';
-                } else {
-                    $cmd .= ' -l '.escapeshellarg($head['language']);
+                    $between = implode(PHP_EOL, $between);
+                    $between = $this->colorize($between, $head);
+                    $between = explode(PHP_EOL, $between);
+
+                    $body = array_merge($before, $between, $after);
                 }
+
+                $body = implode(PHP_EOL, $body);
             }
 
-            // Guess or not (depending on the config) otherwise
+            /* Otherwise, normal colorization */
             else {
-                if ($this->config->get('plugins.pygments.guess_by_default', true)) {
-                    $cmd .= ' -g';
-                } else {
-                    $cmd .= ' -l text';
-                }
+                $body = $this->colorize($body, $head);
             }
-
-            // Set formatter to HTML
-            $cmd .= ' -f html';
-
-            // Avoid wrapping
-            $cmd .= ' -O nowrap';
-
-            // Don't use CSS classes but inline style
-            if ($this->config->get('plugins.pygments.pygmentize.formatter.noclasses', true)) {
-                $cmd .= ' -O noclasses';
-            }
-
-            // Highlight lines if asked
-            if (isset($head['highlights'])) {
-                $cmd .= ' -P hl_lines='.escapeshellarg(implode(' ', $head['highlights']));
-            }
-
-            // Set style
-            $cmd .= ' -P style='.$this->config->get('plugins.pygments.pygmentize.style', 'default');
-
-            /* Execute the command */
-            $body = trim(shell_exec($cmd));
 
             if (isset($head['title'])) {
                 $title = '<pre class="code-title"><code>'.$head['title'].'</code></pre>';
@@ -127,5 +112,56 @@ class PygmentsPlugin extends Plugin
         }
 
         $page->setRawContent($content);
+    }
+
+    private function colorize($body, $params)
+    {
+        /* Craft command line */
+
+        // Send body via command line
+        $cmd = 'printf -- '.escapeshellarg(str_replace(['\\','%'], ['\\\\','%%'], $body));
+
+        // Base command
+        $cmd .= ' | '.$this->config->get('plugins.pygments.pygmentize.command', 'pygmentize');
+
+        // Find the language if given
+        if (isset($params['language'])) {
+            if ($params['language'] == 'guess') {
+                $cmd .= ' -g';
+            } else {
+                $cmd .= ' -l '.escapeshellarg($params['language']);
+            }
+        }
+
+        // Guess or not (depending on the config) otherwise
+        else {
+            if ($this->config->get('plugins.pygments.guess_by_default', true)) {
+                $cmd .= ' -g';
+            } else {
+                $cmd .= ' -l text';
+            }
+        }
+
+        // Set formatter to HTML
+        $cmd .= ' -f html';
+
+        // Avoid wrapping
+        $cmd .= ' -O nowrap';
+
+        // Don't use CSS classes but inline style
+        if ($this->config->get('plugins.pygments.pygmentize.formatter.noclasses', true)) {
+            $cmd .= ' -O noclasses';
+        }
+
+        // Highlight lines if asked
+        if (isset($params['highlights'])) {
+            $cmd .= ' -P hl_lines='.escapeshellarg(implode(' ', $params['highlights']));
+        }
+
+        // Set style
+        $cmd .= ' -P style='.$this->config->get('plugins.pygments.pygmentize.style', 'default');
+
+        /* Execute the command */
+        return rtrim(shell_exec($cmd));
     }
 }
